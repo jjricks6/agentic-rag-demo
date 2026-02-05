@@ -63,11 +63,6 @@ resource "aws_cloudwatch_log_metric_filter" "invocation_count" {
     namespace = var.custom_metrics_namespace
     value     = "1"
     unit      = "Count"
-
-    dimensions = {
-      Environment = var.environment
-      Project     = var.project_name
-    }
   }
 
   depends_on = [aws_cloudwatch_log_group.agent_logs]
@@ -86,11 +81,6 @@ resource "aws_cloudwatch_log_metric_filter" "error_count" {
     namespace = var.custom_metrics_namespace
     value     = "1"
     unit      = "Count"
-
-    dimensions = {
-      Environment = var.environment
-      Project     = var.project_name
-    }
   }
 
   depends_on = [aws_cloudwatch_log_group.agent_logs]
@@ -109,11 +99,6 @@ resource "aws_cloudwatch_log_metric_filter" "latency" {
     namespace = var.custom_metrics_namespace
     value     = "$latency"
     unit      = "Milliseconds"
-
-    dimensions = {
-      Environment = var.environment
-      Project     = var.project_name
-    }
   }
 
   depends_on = [aws_cloudwatch_log_group.agent_logs]

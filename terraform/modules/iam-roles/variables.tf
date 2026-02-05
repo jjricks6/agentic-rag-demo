@@ -26,8 +26,7 @@ variable "trusted_services" {
   description = "List of AWS service principals that can assume this role"
   type        = list(string)
   default = [
-    "bedrock.amazonaws.com",
-    "agentcore.amazonaws.com"
+    "bedrock.amazonaws.com"
   ]
 
   validation {
