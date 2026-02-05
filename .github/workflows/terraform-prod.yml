@@ -63,9 +63,31 @@ jobs:
       - name: Generate backend config
         working-directory: terraform/backend
         run: |
+          set -e
           terraform init
-          BUCKET_NAME=$(terraform output -raw state_bucket_name)
-          TABLE_NAME=$(terraform output -raw state_lock_table_name)
+
+          # Check if backend has been deployed by verifying outputs exist
+          if ! terraform output state_bucket_name &> /dev/null; then
+            echo "❌ ERROR: Backend has not been deployed yet!"
+            echo ""
+            echo "Please deploy the backend first:"
+            echo "1. Go to Actions tab"
+            echo "2. Select 'Terraform Backend Setup' workflow"
+            echo "3. Click 'Run workflow' and wait for completion"
+            echo ""
+            echo "Then re-run this workflow."
+            exit 1
+          fi
+
+          BUCKET_NAME=$(terraform output -raw state_bucket_name 2>&1)
+          TABLE_NAME=$(terraform output -raw state_lock_table_name 2>&1)
+
+          # Verify outputs don't contain error messages
+          if [[ "$BUCKET_NAME" == *"Warning"* ]] || [[ "$BUCKET_NAME" == *"Error"* ]]; then
+            echo "❌ ERROR: Failed to read backend outputs"
+            echo "Backend may not be properly deployed"
+            exit 1
+          fi
 
           cat > ../environments/prod/backend.hcl <<EOF
           bucket         = "$BUCKET_NAME"
@@ -74,6 +96,10 @@ jobs:
           dynamodb_table = "$TABLE_NAME"
           encrypt        = true
           EOF
+
+          echo "✅ Backend config generated successfully"
+          echo "Bucket: $BUCKET_NAME"
+          echo "Table: $TABLE_NAME"
 
       - name: Terraform Init
         run: terraform init -backend-config=backend.hcl
@@ -154,9 +180,31 @@ jobs:
       - name: Generate backend config
         working-directory: terraform/backend
         run: |
+          set -e
           terraform init
-          BUCKET_NAME=$(terraform output -raw state_bucket_name)
-          TABLE_NAME=$(terraform output -raw state_lock_table_name)
+
+          # Check if backend has been deployed by verifying outputs exist
+          if ! terraform output state_bucket_name &> /dev/null; then
+            echo "❌ ERROR: Backend has not been deployed yet!"
+            echo ""
+            echo "Please deploy the backend first:"
+            echo "1. Go to Actions tab"
+            echo "2. Select 'Terraform Backend Setup' workflow"
+            echo "3. Click 'Run workflow' and wait for completion"
+            echo ""
+            echo "Then re-run this workflow."
+            exit 1
+          fi
+
+          BUCKET_NAME=$(terraform output -raw state_bucket_name 2>&1)
+          TABLE_NAME=$(terraform output -raw state_lock_table_name 2>&1)
+
+          # Verify outputs don't contain error messages
+          if [[ "$BUCKET_NAME" == *"Warning"* ]] || [[ "$BUCKET_NAME" == *"Error"* ]]; then
+            echo "❌ ERROR: Failed to read backend outputs"
+            echo "Backend may not be properly deployed"
+            exit 1
+          fi
 
           cat > ../environments/prod/backend.hcl <<EOF
           bucket         = "$BUCKET_NAME"
@@ -165,6 +213,10 @@ jobs:
           dynamodb_table = "$TABLE_NAME"
           encrypt        = true
           EOF
+
+          echo "✅ Backend config generated successfully"
+          echo "Bucket: $BUCKET_NAME"
+          echo "Table: $TABLE_NAME"
 
       - name: Terraform Init
         run: terraform init -backend-config=backend.hcl

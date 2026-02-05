@@ -30,13 +30,21 @@ git commit -m "Initial infrastructure setup"
 git push origin main
 ```
 
-### Step 5: Watch Deployment
+### Step 5: Deploy Backend (REQUIRED FIRST STEP)
+**⚠️ IMPORTANT**: The backend MUST be deployed before dev/prod environments!
+
 - [ ] Go to **Actions** tab
-- [ ] Watch **Terraform Backend Setup** run
-- [ ] Watch **Terraform Dev Environment** run
+- [ ] Click **Terraform Backend Setup** workflow
+- [ ] Click **Run workflow** → **Run workflow**
+- [ ] Wait for completion (~2-3 minutes)
+- [ ] Verify green checkmark ✅
+
+### Step 6: Watch Dev Deployment
+- [ ] After backend completes, **Terraform Dev Environment** will automatically trigger
+- [ ] Or manually trigger: **Actions** → **Terraform Dev Environment** → **Run workflow**
 - [ ] Check for green checkmarks ✅
 
-### Step 6: Verify Deployment
+### Step 7: Verify Deployment
 - [ ] Download `agent-config-dev.json` artifact
 - [ ] Check [AWS Bedrock Console](https://console.aws.amazon.com/bedrock)
 - [ ] Verify agent appears in Agents list
