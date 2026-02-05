@@ -1,0 +1,183 @@
+name: Terraform Dev Environment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/environments/dev/**'
+      - 'terraform/modules/**'
+      - 'terraform/backend/**'
+      - '.github/workflows/terraform-dev.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/environments/dev/**'
+      - 'terraform/modules/**'
+      - 'terraform/backend/**'
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.5.0
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan (Dev)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/environments/dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create Lambda placeholder
+        run: |
+          echo 'def handler(event, context): return {"statusCode": 200}' > lambda_placeholder.py
+          zip lambda-placeholder.zip lambda_placeholder.py
+          rm lambda_placeholder.py
+
+      - name: Generate backend config
+        working-directory: terraform/backend
+        run: |
+          terraform init
+          BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          TABLE_NAME=$(terraform output -raw state_lock_table_name)
+
+          cat > ../environments/dev/backend.hcl <<EOF
+          bucket         = "$BUCKET_NAME"
+          key            = "dev/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "$TABLE_NAME"
+          encrypt        = true
+          EOF
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=dev.tfplan
+          terraform show -no-color dev.tfplan > plan-output.txt
+
+      - name: Comment PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/environments/dev/plan-output.txt', 'utf8');
+            const maxLength = 65000;
+            const truncatedPlan = plan.length > maxLength
+              ? plan.substring(0, maxLength) + '\n\n...[Plan truncated due to length]'
+              : plan;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Dev Environment Plan\n\`\`\`terraform\n${truncatedPlan}\n\`\`\``
+            });
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-tfplan
+          path: terraform/environments/dev/dev.tfplan
+          retention-days: 5
+
+  terraform-apply:
+    name: Terraform Apply (Dev)
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: terraform/environments/dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Create Lambda placeholder
+        run: |
+          echo 'def handler(event, context): return {"statusCode": 200}' > lambda_placeholder.py
+          zip lambda-placeholder.zip lambda_placeholder.py
+          rm lambda_placeholder.py
+
+      - name: Generate backend config
+        working-directory: terraform/backend
+        run: |
+          terraform init
+          BUCKET_NAME=$(terraform output -raw state_bucket_name)
+          TABLE_NAME=$(terraform output -raw state_lock_table_name)
+
+          cat > ../environments/dev/backend.hcl <<EOF
+          bucket         = "$BUCKET_NAME"
+          key            = "dev/terraform.tfstate"
+          region         = "${{ env.AWS_REGION }}"
+          dynamodb_table = "$TABLE_NAME"
+          encrypt        = true
+          EOF
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dev-tfplan
+          path: terraform/environments/dev
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve dev.tfplan
+
+      - name: Save outputs
+        run: |
+          terraform output -json > ../../../agent-config-dev.json
+          echo "### Dev Environment Deployed! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Agent ID: $(terraform output -raw agent_id)" >> $GITHUB_STEP_SUMMARY
+          echo "Documents Bucket: $(terraform output -raw documents_bucket_name)" >> $GITHUB_STEP_SUMMARY
+          echo "Vectors Bucket: $(terraform output -raw vectors_bucket_name)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload config artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-config-dev
+          path: agent-config-dev.json
+          retention-days: 30

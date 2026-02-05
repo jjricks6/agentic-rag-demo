@@ -1,0 +1,28 @@
+# Terraform Backend Configuration Example
+# Copy this file to terraform.tfvars and customize for your environment
+
+# AWS region where the backend resources will be created
+aws_region = "us-east-1"
+
+# Project name (must be globally unique for S3 bucket naming)
+# Format: lowercase letters, numbers, and hyphens only
+project_name = "agentic-rag-demo"
+
+# Number of days to retain noncurrent versions of state files
+# Increase for production environments with frequent changes
+state_version_retention_days = 90
+
+# Number of days to retain S3 access logs
+# Adjust based on compliance requirements
+log_retention_days = 30
+
+# Enable KMS encryption for enhanced security
+# Note: Adds ~$1/month to costs
+enable_kms_encryption = false
+
+# Additional tags to apply to all resources
+tags = {
+  Team       = "DevOps"
+  CostCenter = "Engineering"
+  Owner      = "your-email@example.com"
+}

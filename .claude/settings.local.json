@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__aws-documentation__search_documentation",
+      "mcp__bedrock-agentcore__search_agentcore_docs",
+      "mcp__bedrock-agentcore__manage_agentcore_runtime",
+      "mcp__bedrock-kb-retrieval__ListKnowledgeBases",
+      "Bash(terraform init:*)",
+      "Bash(terraform plan:*)",
+      "mcp__terraform__SearchAwsProviderDocs",
+      "mcp__terraform__SearchAwsccProviderDocs",
+      "mcp__terraform__SearchSpecificAwsIaModules",
+      "mcp__github__get_me",
+      "mcp__github__create_repository",
+      "Bash(git add:*)"
+    ],
+    "defaultMode": "bypassPermissions"
+  }
+}

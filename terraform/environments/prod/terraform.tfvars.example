@@ -1,0 +1,83 @@
+# Production Environment Configuration Example
+# Copy this file to terraform.tfvars and customize for your production setup
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+aws_region   = "us-east-1"
+project_name = "agentic-rag-demo"
+environment  = "prod"
+
+# ============================================================================
+# Bedrock Models
+# ============================================================================
+
+llm_model_id        = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+embedding_model_id  = "amazon.titan-embed-text-v2:0"
+
+# ============================================================================
+# Vector Configuration
+# ============================================================================
+
+vector_dimensions = 1024
+distance_metric   = "cosine"
+
+# ============================================================================
+# Storage Configuration
+# ============================================================================
+
+# Enable Glacier transition for cost savings
+enable_glacier_transition = true
+glacier_transition_days   = 180 # 6 months
+
+# CORS configuration for production UI
+enable_cors          = true
+cors_allowed_origins = [
+  "https://app.yourcompany.com",
+  "https://www.yourcompany.com"
+]
+
+# ============================================================================
+# Monitoring & Alarms
+# ============================================================================
+
+# Log retention
+log_retention_days = 90
+
+# SNS topics for alarms (create these first)
+alarm_sns_topic_arns = [
+  # "arn:aws:sns:us-east-1:123456789012:production-alerts"
+]
+
+# Storage alarms
+storage_alarm_threshold_bytes = 107374182400 # 100 GB
+
+# Vector count alarms
+vector_count_alarm_threshold = 1000000 # 1 million
+
+# ============================================================================
+# Lambda Configuration
+# ============================================================================
+
+# Reserved concurrency for predictable performance
+lambda_reserved_concurrency = 10
+
+# ============================================================================
+# Backup Configuration (Optional)
+# ============================================================================
+
+enable_backup     = false
+# backup_role_arn = "arn:aws:iam::123456789012:role/backup-role"
+# backup_plan_id  = "backup-plan-id"
+
+# ============================================================================
+# Tags
+# ============================================================================
+
+tags = {
+  CostCenter  = "Production"
+  Owner       = "ProductionTeam"
+  Compliance  = "Required"
+  Criticality = "High"
+}

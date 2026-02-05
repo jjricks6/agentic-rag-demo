@@ -1,0 +1,121 @@
+name: Terraform Backend Setup
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/backend/**'
+      - '.github/workflows/terraform-backend.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/backend/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.5.0
+
+jobs:
+  backend-plan:
+    name: Backend Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=backend.tfplan
+          terraform show -no-color backend.tfplan > plan-output.txt
+
+      - name: Comment PR with Plan
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('terraform/backend/plan-output.txt', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Terraform Backend Plan\n\`\`\`terraform\n${plan}\n\`\`\``
+            });
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-tfplan
+          path: terraform/backend/backend.tfplan
+          retention-days: 5
+
+  backend-apply:
+    name: Backend Apply
+    runs-on: ubuntu-latest
+    needs: backend-plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: terraform/backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-tfplan
+          path: terraform/backend
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve backend.tfplan
+
+      - name: Save backend outputs
+        run: |
+          echo "### Backend Deployed! 🔧" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "State Bucket: $(terraform output -raw state_bucket_name)" >> $GITHUB_STEP_SUMMARY
+          echo "Lock Table: $(terraform output -raw state_lock_table_name)" >> $GITHUB_STEP_SUMMARY

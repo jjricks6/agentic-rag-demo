@@ -1,0 +1,58 @@
+# Development Environment Configuration Example
+# Copy this file to terraform.tfvars and customize for your setup
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+aws_region   = "us-east-1"
+project_name = "agentic-rag-demo"
+environment  = "dev"
+
+# ============================================================================
+# Bedrock Models
+# ============================================================================
+
+# LLM for agent reasoning and responses
+llm_model_id = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+# Alternatives:
+# - "anthropic.claude-3-haiku-20240307" (faster, cheaper)
+# - "anthropic.claude-3-opus-20240229" (highest quality)
+
+# Embeddings model for vector generation
+embedding_model_id = "amazon.titan-embed-text-v2:0"
+# Must match vector_dimensions below
+
+# ============================================================================
+# Vector Configuration
+# ============================================================================
+
+# Vector dimensions (must match embedding model)
+vector_dimensions = 1024  # For Titan Embeddings v2
+# - Titan v1: 1536
+# - Titan v2: 1024 or 256
+# - Cohere: 1024
+
+# Distance metric for similarity search
+distance_metric = "cosine"
+# Options: "cosine", "euclidean", "inner_product"
+
+# ============================================================================
+# Monitoring
+# ============================================================================
+
+# Log retention period (days)
+log_retention_days = 7
+
+# Enable CloudWatch alarms (set false to reduce noise in dev)
+enable_cloudwatch_alarms = false
+
+# ============================================================================
+# Additional Tags
+# ============================================================================
+
+tags = {
+  CostCenter = "Development"
+  Owner      = "YourName"
+  Team       = "Engineering"
+}

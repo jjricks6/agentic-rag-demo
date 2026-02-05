@@ -1,0 +1,9 @@
+# Backend configuration for Production Environment
+# Copy this file to backend.hcl and update with your backend details
+# Or run: ../../scripts/generate-backend-configs.sh
+
+bucket         = "YOUR_PROJECT-tfstate-YOUR_ACCOUNT_ID"
+key            = "prod/terraform.tfstate"
+region         = "us-east-1"
+dynamodb_table = "YOUR_PROJECT-tfstate-lock"
+encrypt        = true
