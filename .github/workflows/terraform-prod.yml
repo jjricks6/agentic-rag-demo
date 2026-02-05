@@ -61,35 +61,38 @@ jobs:
           rm lambda_placeholder.py
 
       - name: Generate backend config
-        working-directory: terraform/backend
         run: |
           set -e
-          terraform init
 
-          # Check if backend has been deployed by verifying outputs exist
-          if ! terraform output state_bucket_name &> /dev/null; then
-            echo "❌ ERROR: Backend has not been deployed yet!"
+          # Query AWS directly for backend resources (more reliable than Terraform outputs)
+          echo "🔍 Looking for Terraform backend resources in AWS..."
+
+          # Find S3 bucket with terraform state
+          BUCKET_NAME=$(aws s3api list-buckets --query "Buckets[?contains(Name, 'agentic-rag-demo-tfstate')].Name | [0]" --output text)
+
+          if [ "$BUCKET_NAME" == "None" ] || [ -z "$BUCKET_NAME" ]; then
+            echo "❌ ERROR: Backend S3 bucket not found!"
             echo ""
             echo "Please deploy the backend first:"
             echo "1. Go to Actions tab"
             echo "2. Select 'Terraform Backend Setup' workflow"
             echo "3. Click 'Run workflow' and wait for completion"
             echo ""
-            echo "Then re-run this workflow."
             exit 1
           fi
 
-          BUCKET_NAME=$(terraform output -raw state_bucket_name 2>&1)
-          TABLE_NAME=$(terraform output -raw state_lock_table_name 2>&1)
+          # Find DynamoDB table for state locking
+          TABLE_NAME=$(aws dynamodb list-tables --query "TableNames[?contains(@, 'agentic-rag-demo-tfstate-lock')] | [0]" --output text)
 
-          # Verify outputs don't contain error messages
-          if [[ "$BUCKET_NAME" == *"Warning"* ]] || [[ "$BUCKET_NAME" == *"Error"* ]]; then
-            echo "❌ ERROR: Failed to read backend outputs"
-            echo "Backend may not be properly deployed"
+          if [ "$TABLE_NAME" == "None" ] || [ -z "$TABLE_NAME" ]; then
+            echo "❌ ERROR: Backend DynamoDB table not found!"
+            echo ""
+            echo "Backend may not be fully deployed. Please check the backend deployment."
             exit 1
           fi
 
-          cat > ../environments/prod/backend.hcl <<EOF
+          # Generate backend config
+          cat > backend.hcl <<EOF
           bucket         = "$BUCKET_NAME"
           key            = "prod/terraform.tfstate"
           region         = "${{ env.AWS_REGION }}"
@@ -178,35 +181,38 @@ jobs:
           rm lambda_placeholder.py
 
       - name: Generate backend config
-        working-directory: terraform/backend
         run: |
           set -e
-          terraform init
 
-          # Check if backend has been deployed by verifying outputs exist
-          if ! terraform output state_bucket_name &> /dev/null; then
-            echo "❌ ERROR: Backend has not been deployed yet!"
+          # Query AWS directly for backend resources (more reliable than Terraform outputs)
+          echo "🔍 Looking for Terraform backend resources in AWS..."
+
+          # Find S3 bucket with terraform state
+          BUCKET_NAME=$(aws s3api list-buckets --query "Buckets[?contains(Name, 'agentic-rag-demo-tfstate')].Name | [0]" --output text)
+
+          if [ "$BUCKET_NAME" == "None" ] || [ -z "$BUCKET_NAME" ]; then
+            echo "❌ ERROR: Backend S3 bucket not found!"
             echo ""
             echo "Please deploy the backend first:"
             echo "1. Go to Actions tab"
             echo "2. Select 'Terraform Backend Setup' workflow"
             echo "3. Click 'Run workflow' and wait for completion"
             echo ""
-            echo "Then re-run this workflow."
             exit 1
           fi
 
-          BUCKET_NAME=$(terraform output -raw state_bucket_name 2>&1)
-          TABLE_NAME=$(terraform output -raw state_lock_table_name 2>&1)
+          # Find DynamoDB table for state locking
+          TABLE_NAME=$(aws dynamodb list-tables --query "TableNames[?contains(@, 'agentic-rag-demo-tfstate-lock')] | [0]" --output text)
 
-          # Verify outputs don't contain error messages
-          if [[ "$BUCKET_NAME" == *"Warning"* ]] || [[ "$BUCKET_NAME" == *"Error"* ]]; then
-            echo "❌ ERROR: Failed to read backend outputs"
-            echo "Backend may not be properly deployed"
+          if [ "$TABLE_NAME" == "None" ] || [ -z "$TABLE_NAME" ]; then
+            echo "❌ ERROR: Backend DynamoDB table not found!"
+            echo ""
+            echo "Backend may not be fully deployed. Please check the backend deployment."
             exit 1
           fi
 
-          cat > ../environments/prod/backend.hcl <<EOF
+          # Generate backend config
+          cat > backend.hcl <<EOF
           bucket         = "$BUCKET_NAME"
           key            = "prod/terraform.tfstate"
           region         = "${{ env.AWS_REGION }}"
