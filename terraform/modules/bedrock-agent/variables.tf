@@ -199,7 +199,7 @@ variable "agent_version" {
 variable "skip_resource_in_use_check" {
   description = "Skip check for resources in use during updates"
   type        = bool
-  default     = false
+  default     = true
 }
 
 # Tags

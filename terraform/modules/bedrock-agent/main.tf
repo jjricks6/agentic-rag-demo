@@ -230,6 +230,9 @@ resource "aws_bedrockagent_agent_action_group" "vector_search" {
     lambda = var.search_lambda_arn
   }
 
+  # Wait for document management action group to complete
+  depends_on = [aws_bedrockagent_agent_action_group.document_management]
+
   # API Schema for vector search operations
   api_schema {
     payload = jsonencode({
