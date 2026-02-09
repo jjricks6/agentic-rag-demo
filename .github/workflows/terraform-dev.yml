@@ -222,7 +222,32 @@ jobs:
           path: terraform/environments/dev
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve dev.tfplan
+        run: |
+          # Retry logic for Bedrock agent versioning conflicts
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "Apply attempt $ATTEMPT of $MAX_ATTEMPTS..."
+
+            if terraform apply -auto-approve dev.tfplan; then
+              echo "✅ Apply succeeded!"
+              exit 0
+            fi
+
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              echo "⚠️  Apply failed, waiting 30 seconds before retry..."
+              sleep 30
+
+              # Re-run plan for retry
+              terraform plan -out=dev.tfplan
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          echo "❌ Apply failed after $MAX_ATTEMPTS attempts"
+          exit 1
 
       - name: Save outputs
         run: |
