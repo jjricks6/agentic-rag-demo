@@ -65,22 +65,6 @@ resource "aws_bedrockagent_agent" "rag_agent" {
     }
   )
 
-  # Wait for AWS to finish processing the agent before continuing
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Waiting for agent ${self.id} to be ready..."
-      for i in {1..60}; do
-        STATUS=$(aws bedrock-agent get-agent --agent-id ${self.id} --region ${data.aws_region.current.id} --query 'agent.agentStatus' --output text 2>/dev/null || echo "ERROR")
-        if [ "$STATUS" = "PREPARED" ] || [ "$STATUS" = "NOT_PREPARED" ]; then
-          echo "Agent is ready (status: $STATUS)"
-          exit 0
-        fi
-        echo "Waiting... (attempt $i/60, status: $STATUS)"
-        sleep 3
-      done
-      echo "Agent ready after 3 minutes"
-    EOT
-  }
 }
 
 # Agent Alias for versioning
@@ -107,6 +91,7 @@ resource "aws_bedrockagent_agent_action_group" "document_management" {
   agent_version              = var.agent_version != null ? var.agent_version : "DRAFT"
   description                = "Actions for managing documents in S3"
   skip_resource_in_use_check = var.skip_resource_in_use_check
+  prepare_agent              = false  # Don't prepare agent yet - will prepare after all action groups are added
 
   action_group_executor {
     lambda = var.document_lambda_arn
@@ -242,6 +227,7 @@ resource "aws_bedrockagent_agent_action_group" "vector_search" {
   agent_version              = var.agent_version != null ? var.agent_version : "DRAFT"
   description                = "Actions for searching vectors and retrieving context"
   skip_resource_in_use_check = var.skip_resource_in_use_check
+  prepare_agent              = false  # Don't prepare agent yet - will prepare after all action groups are added
 
   action_group_executor {
     lambda = var.search_lambda_arn
