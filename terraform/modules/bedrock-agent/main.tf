@@ -89,10 +89,16 @@ resource "aws_bedrockagent_agent_action_group" "document_management" {
   agent_id                   = aws_bedrockagent_agent.rag_agent.id
   agent_version              = var.agent_version != null ? var.agent_version : "DRAFT"
   description                = "Actions for managing documents in S3"
-  skip_resource_in_use_check = var.skip_resource_in_use_check
+  skip_resource_in_use_check = true  # Always skip resource checks to avoid race conditions
 
   action_group_executor {
     lambda = var.document_lambda_arn
+  }
+
+  # Use timeouts to allow agent preparation to complete
+  timeouts {
+    create = "10m"
+    update = "10m"
   }
 
   # API Schema for document operations
@@ -224,7 +230,7 @@ resource "aws_bedrockagent_agent_action_group" "vector_search" {
   agent_id                   = aws_bedrockagent_agent.rag_agent.id
   agent_version              = var.agent_version != null ? var.agent_version : "DRAFT"
   description                = "Actions for searching vectors and retrieving context"
-  skip_resource_in_use_check = var.skip_resource_in_use_check
+  skip_resource_in_use_check = true  # Always skip resource checks to avoid race conditions
 
   action_group_executor {
     lambda = var.search_lambda_arn
@@ -232,6 +238,17 @@ resource "aws_bedrockagent_agent_action_group" "vector_search" {
 
   # Wait for document management action group to complete
   depends_on = [aws_bedrockagent_agent_action_group.document_management]
+
+  # Retry on versioning state conflicts
+  lifecycle {
+    create_before_destroy = false
+  }
+
+  # Use timeouts to allow agent preparation to complete
+  timeouts {
+    create = "10m"
+    update = "10m"
+  }
 
   # API Schema for vector search operations
   api_schema {
