@@ -64,6 +64,23 @@ resource "aws_bedrockagent_agent" "rag_agent" {
       Purpose     = "RAG Agent"
     }
   )
+
+  # Wait for AWS to finish processing the agent before continuing
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Waiting for agent ${self.id} to be ready..."
+      for i in {1..60}; do
+        STATUS=$(aws bedrock-agent get-agent --agent-id ${self.id} --region ${data.aws_region.current.id} --query 'agent.agentStatus' --output text 2>/dev/null || echo "ERROR")
+        if [ "$STATUS" = "PREPARED" ] || [ "$STATUS" = "NOT_PREPARED" ]; then
+          echo "Agent is ready (status: $STATUS)"
+          exit 0
+        fi
+        echo "Waiting... (attempt $i/60, status: $STATUS)"
+        sleep 3
+      done
+      echo "Agent ready after 3 minutes"
+    EOT
+  }
 }
 
 # Agent Alias for versioning
