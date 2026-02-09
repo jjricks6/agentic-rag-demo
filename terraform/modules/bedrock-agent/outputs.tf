@@ -22,29 +22,19 @@ output "agent_version" {
 
 # Agent Alias Outputs
 
-output "agent_alias_id" {
-  description = "The ID of the agent alias"
-  value       = aws_bedrockagent_agent_alias.agent_alias.id
-}
-
-output "agent_alias_arn" {
-  description = "The ARN of the agent alias"
-  value       = aws_bedrockagent_agent_alias.agent_alias.agent_alias_arn
-}
-
-output "agent_alias_name" {
-  description = "The name of the agent alias"
-  value       = aws_bedrockagent_agent_alias.agent_alias.agent_alias_name
-}
-
 output "prepared_alias_id" {
-  description = "The ID of the prepared agent alias"
+  description = "The ID of the agent alias for invocation"
   value       = aws_bedrockagent_agent_alias.prepared_alias.id
 }
 
 output "prepared_alias_arn" {
-  description = "The ARN of the prepared agent alias"
+  description = "The ARN of the agent alias for invocation"
   value       = aws_bedrockagent_agent_alias.prepared_alias.agent_alias_arn
+}
+
+output "prepared_alias_name" {
+  description = "The name of the agent alias"
+  value       = aws_bedrockagent_agent_alias.prepared_alias.agent_alias_name
 }
 
 # Action Group Outputs

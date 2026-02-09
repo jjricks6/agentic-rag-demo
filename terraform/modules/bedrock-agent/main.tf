@@ -67,23 +67,6 @@ resource "aws_bedrockagent_agent" "rag_agent" {
 
 }
 
-# Agent Alias for versioning
-resource "aws_bedrockagent_agent_alias" "agent_alias" {
-  agent_alias_name = local.agent_alias_name
-  agent_id         = aws_bedrockagent_agent.rag_agent.id
-  description      = "Alias for ${var.environment} environment"
-
-  # Routing configuration for version management
-  dynamic "routing_configuration" {
-    for_each = var.agent_version != null ? [1] : []
-    content {
-      agent_version = var.agent_version
-    }
-  }
-
-  tags = var.tags
-}
-
 # Action Group for Document Management
 resource "aws_bedrockagent_agent_action_group" "document_management" {
   action_group_name          = "document-management"
@@ -310,55 +293,16 @@ resource "aws_bedrockagent_agent_action_group" "vector_search" {
 
 }
 
-# Wait for agent to finish processing after action groups are added
-resource "null_resource" "wait_for_agent_ready" {
+# Agent alias with all action groups configured
+resource "aws_bedrockagent_agent_alias" "prepared_alias" {
   depends_on = [
     aws_bedrockagent_agent_action_group.document_management,
     aws_bedrockagent_agent_action_group.vector_search
   ]
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "⏳ Waiting for agent to finish processing action groups..."
-      for i in {1..40}; do
-        STATUS=$(aws bedrock-agent get-agent \
-          --agent-id ${aws_bedrockagent_agent.rag_agent.id} \
-          --region ${data.aws_region.current.id} \
-          --query 'agent.agentStatus' \
-          --output text 2>/dev/null || echo "ERROR")
-
-        if [ "$STATUS" = "PREPARED" ] || [ "$STATUS" = "NOT_PREPARED" ]; then
-          echo "✅ Agent is ready for alias creation (status: $STATUS)"
-          exit 0
-        fi
-
-        echo "   Waiting... (attempt $i/40, current status: $STATUS)"
-        sleep 5
-      done
-
-      echo "⚠️  Timeout reached, proceeding anyway"
-      exit 0
-    EOT
-  }
-
-  triggers = {
-    agent_id = aws_bedrockagent_agent.rag_agent.id
-    action_groups = join(",", [
-      aws_bedrockagent_agent_action_group.document_management.id,
-      aws_bedrockagent_agent_action_group.vector_search.id
-    ])
-  }
-}
-
-# Prepare agent (required before use)
-resource "aws_bedrockagent_agent_alias" "prepared_alias" {
-  depends_on = [
-    null_resource.wait_for_agent_ready
-  ]
-
   agent_alias_name = "${local.agent_alias_name}-prepared"
   agent_id         = aws_bedrockagent_agent.rag_agent.id
-  description      = "Prepared agent alias with all action groups"
+  description      = "Agent alias with document management and vector search capabilities"
 
   tags = var.tags
 }
