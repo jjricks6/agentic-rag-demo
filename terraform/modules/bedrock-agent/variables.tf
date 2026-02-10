@@ -31,13 +31,13 @@ variable "agent_role_arn" {
 }
 
 variable "foundation_model_id" {
-  description = "ID of the foundation model to use for the agent"
+  description = "ID of the foundation model or inference profile to use for the agent"
   type        = string
-  default     = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+  default     = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
   validation {
-    condition     = can(regex("^(anthropic|amazon|cohere|meta|ai21)\\.", var.foundation_model_id))
-    error_message = "Foundation model ID must be a valid Bedrock model identifier."
+    condition     = can(regex("^(us\\.|global\\.)?(anthropic|amazon|cohere|meta|ai21)\\.", var.foundation_model_id))
+    error_message = "Foundation model ID must be a valid Bedrock model or inference profile identifier."
   }
 }
 

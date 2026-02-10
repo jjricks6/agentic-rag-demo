@@ -42,13 +42,13 @@ variable "environment" {
 # ============================================================================
 
 variable "llm_model_id" {
-  description = "Bedrock LLM model ID for the agent"
+  description = "Bedrock LLM model ID or inference profile ID for the agent"
   type        = string
-  default     = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+  default     = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
   validation {
-    condition     = can(regex("^(anthropic|amazon|cohere|meta|ai21)\\.", var.llm_model_id))
-    error_message = "LLM model ID must be a valid Bedrock model identifier."
+    condition     = can(regex("^(us\\.|global\\.)?(anthropic|amazon|cohere|meta|ai21)\\.", var.llm_model_id))
+    error_message = "LLM model ID must be a valid Bedrock model or inference profile identifier."
   }
 }
 

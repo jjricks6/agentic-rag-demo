@@ -36,7 +36,7 @@ module "bedrock_agent" {
   search_lambda_arn   = aws_lambda_function.search_handler.arn
 
   # Foundation model
-  foundation_model_id = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+  foundation_model_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
   tags = {
     Project = "agentic-rag-demo"
@@ -60,7 +60,7 @@ module "bedrock_agent" {
   search_lambda_arn   = aws_lambda_function.search_handler.arn
 
   # Model configuration
-  foundation_model_id     = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+  foundation_model_id     = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
   temperature             = 0.5  # Lower for more deterministic responses
   max_tokens              = 4096
   top_p                   = 0.95
@@ -144,7 +144,7 @@ module "bedrock_agent" {
 
 | Name | Description | Type | Default |
 |------|-------------|------|---------|
-| foundation_model_id | Bedrock model ID | `string` | `"anthropic.claude-3-5-sonnet-20250110-v1:0"` |
+| foundation_model_id | Bedrock model ID | `string` | `"us.anthropic.claude-3-5-sonnet-20241022-v2:0"` |
 | agent_instruction | Agent behavior instructions | `string` | Default RAG instructions |
 | temperature | Sampling temperature (0-1) | `number` | `0.7` |
 | max_tokens | Maximum tokens to generate | `number` | `2048` |
@@ -243,7 +243,7 @@ def lambda_handler(event, context):
 
 | Model ID | Context | Speed | Cost |
 |----------|---------|-------|------|
-| `anthropic.claude-3-5-sonnet-20250110-v1:0` | 200K | Fast | $$ |
+| `us.anthropic.claude-3-5-sonnet-20241022-v2:0` | 200K | Fast | $$ |
 | `anthropic.claude-3-opus-20240229` | 200K | Slow | $$$$ |
 | `anthropic.claude-3-haiku-20240307` | 200K | Very Fast | $ |
 | `amazon.titan-text-express-v1` | 8K | Fast | $ |

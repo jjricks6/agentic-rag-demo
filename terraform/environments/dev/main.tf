@@ -364,3 +364,58 @@ module "bedrock_agent" {
     aws_lambda_permission.allow_bedrock_search
   ]
 }
+
+# ============================================================================
+# SSM PARAMETER STORE (Agent Configuration)
+# ============================================================================
+# These parameters are read by the Strands Agent at startup via
+# SSM_PARAMETER_PREFIX=/${var.project_name}/${var.environment}
+# This eliminates the need to manually pass environment variables.
+
+locals {
+  ssm_prefix = "/${var.project_name}/${var.environment}"
+
+  ssm_parameters = {
+    documents_bucket = module.s3_storage.bucket_id
+    vectors_bucket   = module.s3_vectors.vector_bucket_name
+    vector_index     = module.s3_vectors.vector_index_name
+    embedding_model  = var.embedding_model_id
+    llm_model        = var.llm_model_id
+    vector_dimensions = tostring(var.vector_dimensions)
+    aws_region       = local.region
+    environment      = var.environment
+  }
+}
+
+resource "aws_ssm_parameter" "agent_config" {
+  for_each = local.ssm_parameters
+
+  name  = "${local.ssm_prefix}/${each.key}"
+  type  = "String"
+  value = each.value
+
+  tags = merge(local.common_tags, {
+    Purpose = "Agent configuration parameter"
+  })
+}
+
+# IAM policy for reading SSM parameters (attached to agent role)
+resource "aws_iam_role_policy" "ssm_config_read" {
+  name = "${var.project_name}-ssm-config-${var.environment}"
+  role = module.iam_roles.role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParametersByPath",
+          "ssm:GetParameters",
+          "ssm:GetParameter"
+        ]
+        Resource = "arn:aws:ssm:${local.region}:${local.account_id}:parameter${local.ssm_prefix}/*"
+      }
+    ]
+  })
+}

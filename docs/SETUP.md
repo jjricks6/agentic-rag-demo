@@ -143,7 +143,7 @@ TF_STATE_LOCK_TABLE=${PROJECT_NAME}-tfstate-lock
 
 # Bedrock Configuration
 BEDROCK_EMBEDDING_MODEL=amazon.titan-embed-text-v2:0
-BEDROCK_LLM_MODEL=anthropic.claude-3-5-sonnet-20250110-v1:0
+BEDROCK_LLM_MODEL=us.anthropic.claude-3-5-sonnet-20241022-v2:0
 
 # Agent Configuration
 AGENT_NAME=${PROJECT_NAME}-agent
@@ -302,7 +302,7 @@ documents_bucket_prefix = "documents"
 
 # Bedrock Configuration
 embedding_model_id = "amazon.titan-embed-text-v2:0"
-llm_model_id      = "anthropic.claude-3-5-sonnet-20250110-v1:0"
+llm_model_id      = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 # Agent Configuration
 agent_name          = "agentic-rag-demo-agent"

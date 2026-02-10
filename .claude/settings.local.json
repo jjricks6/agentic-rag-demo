@@ -12,7 +12,11 @@
       "mcp__terraform__SearchSpecificAwsIaModules",
       "mcp__github__get_me",
       "mcp__github__create_repository",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "mcp__bedrock-agentcore__fetch_agentcore_doc",
+      "mcp__strands-agents__search_docs",
+      "mcp__aws-documentation__read_documentation",
+      "mcp__strands-agents__fetch_doc"
     ],
     "defaultMode": "bypassPermissions"
   }

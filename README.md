@@ -1,186 +1,277 @@
 # Agentic RAG Demo
 
-A production-ready bidirectional RAG (Retrieval Augmented Generation) system built on AWS that enables intelligent document management and retrieval through an AI agent.
+A bidirectional RAG (Retrieval Augmented Generation) system built on AWS. Users upload documents, query them with natural language, and manage their knowledge base through a conversational AI agent.
 
-## Overview
-
-This project demonstrates a complete RAG architecture where users can:
-- **Upload documents** through a conversational interface
-- **Query knowledge** with natural language
-- **Dynamically manage** their document knowledge base
-
-Unlike traditional RAG systems that are read-only, this bidirectional approach allows the agent to both retrieve information AND accept new documents, creating a living, adaptive knowledge base.
-
-## Key Features
-
-- **Intelligent Document Processing**: Automatic chunking, embedding, and vector storage
-- **Natural Language Interface**: Chat-based interaction powered by Streamlit UI
-- **AWS-Native Architecture**: Leverages S3, S3 Vectors, and Bedrock for scalability
-- **Infrastructure as Code**: Complete Terraform deployment with dev/prod environments
-- **CI/CD Pipeline**: Automated deployment through GitHub Actions
-- **Cost-Optimized**: On-demand pricing with no idle infrastructure costs
+Unlike traditional read-only RAG systems, this agent can both retrieve information **and** accept new documents, creating a living, adaptive knowledge base.
 
 ## Architecture
 
-The system follows a modern serverless architecture:
+```
+Streamlit UI (local)
+      │
+      ├── Local mode ──> Strands Agent (in-process)
+      │                        │
+      └── AgentCore mode ──> AgentCore Runtime (AWS)
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+              Amazon S3      Amazon Bedrock   S3 Vectors
+            (documents)    (Claude + Titan)  (embeddings)
+```
 
-1. **Document Upload Flow**:
-   - User uploads document via Streamlit UI
-   - Agent stores document in S3
-   - Document is chunked using recursive text splitting
-   - Chunks are embedded using Bedrock embeddings model
-   - Vectors are stored in S3 Vectors for fast retrieval
+**Document upload**: Streamlit uploads the file to S3, then tells the agent to process it. The agent extracts text, chunks it, generates embeddings via Bedrock Titan, and stores vectors in S3 Vectors.
 
-2. **Query Flow**:
-   - User asks a question via Streamlit UI
-   - Question is embedded using Bedrock
-   - Vector similarity search in S3 Vectors finds relevant chunks
-   - Agent synthesizes response with source attribution
-   - Response includes relevant document references
+**Query**: The agent embeds the question, performs vector similarity search, and synthesizes an answer with source attribution using Claude.
 
 ## Technology Stack
 
-### AWS Services
-- **S3**: Document storage with intelligent tiering
-- **S3 Vectors**: Vector similarity search datastore
-- **Bedrock**: LLM and embeddings (Amazon Titan)
-- **AgentCore**: Serverless agent runtime and orchestration
-- **CloudWatch**: Logging and monitoring
-
-### Frameworks & Tools
-- **Strands Agents**: Agent framework for building agentic workflows
-- **Streamlit**: Interactive web UI
-- **Terraform**: Infrastructure as Code
-- **GitHub Actions**: CI/CD automation
+| Layer | Technology |
+|-------|-----------|
+| Agent framework | [Strands Agents](https://github.com/strands-agents/strands-agents-python) with Bedrock |
+| LLM | Claude 3.5 Sonnet via Amazon Bedrock |
+| Embeddings | Amazon Titan Embed Text v2 (1024 dimensions) |
+| Document storage | Amazon S3 |
+| Vector storage | Amazon S3 Vectors |
+| Agent hosting | Amazon Bedrock AgentCore Runtime (optional) |
+| UI | Streamlit |
+| Infrastructure | Terraform (modular, multi-environment) |
+| CI/CD | GitHub Actions |
+| Configuration | SSM Parameter Store + `.env` fallback |
 
 ## Project Structure
 
 ```
 agentic-rag-demo/
-├── docs/               # Comprehensive documentation
-│   ├── ARCHITECTURE.md # Architectural decisions and diagrams
-│   ├── SETUP.md        # Local setup instructions
-│   └── DEPLOYMENT.md   # Deployment guide
-├── terraform/          # Infrastructure as Code
-│   ├── environments/   # Environment-specific configs
-│   ├── modules/        # Reusable Terraform modules
-│   └── backend/        # Terraform state backend
-├── agent/              # Strands agent implementation
-│   └── strands-agent/  # Agent code and tools
-├── ui/                 # User interface
-│   └── streamlit-app/  # Streamlit application
-└── .github/            # CI/CD workflows
-    └── workflows/      # GitHub Actions
+├── agent/                          # Python application
+│   ├── src/agentic_rag/            # Core package
+│   │   ├── tools/                  # Strands @tool definitions
+│   │   │   ├── document_manager.py # Upload, list, delete documents
+│   │   │   ├── embeddings_client.py# Bedrock Titan embeddings
+│   │   │   └── vector_search.py    # S3 Vectors similarity search
+│   │   ├── agent.py                # Agent factory (create_agent)
+│   │   ├── config.py               # Settings loader (SSM / .env / env vars)
+│   │   └── text_processing.py      # Text extraction and chunking
+│   ├── app.py                      # Streamlit UI (local + agentcore modes)
+│   ├── main.py                     # AgentCore Runtime entry point
+│   ├── pyproject.toml              # Python project config & dependencies
+│   ├── requirements.txt            # Pinned deps for AgentCore container
+│   └── .env.example                # Local config template
+├── terraform/
+│   ├── backend/                    # Remote state (S3 + DynamoDB)
+│   ├── environments/
+│   │   ├── dev/                    # Dev environment config
+│   │   └── prod/                   # Prod environment config
+│   ├── modules/                    # Reusable modules
+│   │   ├── bedrock-agent/          # Bedrock Agent resource
+│   │   ├── cloudwatch-logs/        # Logging & monitoring
+│   │   ├── iam-roles/              # Least-privilege IAM
+│   │   ├── s3-storage/             # Document bucket
+│   │   └── s3-vectors/             # Vector bucket & index
+│   └── scripts/
+│       └── generate-backend-configs.sh
+├── docs/                           # Architecture & deployment docs
+└── .github/workflows/              # CI/CD pipelines
 ```
 
-## Quick Start
+## Prerequisites
 
-### Prerequisites
-- AWS Account with appropriate permissions
-- Terraform >= 1.5.0
-- AWS CLI configured
-- Python >= 3.11
-- Git
+- **AWS Account** with permissions to create S3, Bedrock, SSM, IAM, CloudWatch, Lambda, and S3 Vectors resources
+- **AWS CLI** v2, configured with credentials (`aws configure` or environment variables)
+- **Terraform** >= 1.5.0
+- **Python** >= 3.11
+- **Git**
 
-### Setup
+Make sure the Bedrock models are enabled in your account's region:
+- `amazon.titan-embed-text-v2:0`
+- `us.anthropic.claude-3-5-sonnet-20241022-v2:0`
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/agentic-rag-demo.git
-cd agentic-rag-demo
-
-# 1. Set up Terraform backend
-cd terraform/backend
-terraform init
-terraform apply
-
-# 2. Generate backend configuration files
-cd ../scripts
-./generate-backend-configs.sh
-
-# 3. Deploy development environment
-cd ../environments/dev
-terraform init -backend-config=backend.hcl
-terraform apply
-
-# 4. Run the Streamlit UI locally
-cd ../../../ui/streamlit-app
-pip install -r requirements.txt
-streamlit run app.py
-```
-
-For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
-
-### GitHub Actions Deployment (Recommended)
-
-Automatically deploy infrastructure when you push to GitHub:
-
-```bash
-# 1. Set up GitHub Secrets (one-time)
-# See .github/GITHUB_ACTIONS_SETUP.md for detailed instructions
-
-# 2. Push to GitHub
-git add .
-git commit -m "Initial commit"
-git push origin main
-
-# 3. GitHub Actions will automatically deploy!
-```
-
-**Benefits**:
-- ✅ FREE for public repos (unlimited minutes)
-- ✅ FREE 2,000 minutes/month for private repos
-- ✅ Automatic deployment on push
-- ✅ PR preview plans
-- ✅ Production environment protection
-
-See [.github/GITHUB_ACTIONS_SETUP.md](.github/GITHUB_ACTIONS_SETUP.md) for complete setup guide.
-
-## Documentation
-
-- **[Architecture Guide](docs/ARCHITECTURE.md)**: Detailed architecture, design decisions, and data flow
-- **[Setup Guide](docs/SETUP.md)**: Step-by-step setup for your AWS account
-- **[Deployment Guide](docs/DEPLOYMENT.md)**: CI/CD pipeline and deployment workflows
-
-## Security & Best Practices
-
-This project demonstrates production-ready practices:
-- ✅ No hardcoded ARNs or account IDs
-- ✅ Least privilege IAM policies
-- ✅ Encrypted data at rest (S3 SSE)
-- ✅ Modular, reusable Terraform code
-- ✅ Environment isolation (dev/prod)
-- ✅ Comprehensive logging and monitoring
-- ✅ Cost optimization through serverless architecture
-
-## Cost Estimation
-
-Estimated monthly costs for light usage (dev environment):
-- S3 Storage: ~$0.50 (10GB)
-- S3 Vectors: Pay per query (~$5-10)
-- Bedrock: Pay per token (~$10-20)
-- AgentCore: Pay per execution (~$5-10)
-
-**Total: ~$20-40/month** for development workloads
-
-Production costs scale with usage. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for optimization strategies.
-
-## Contributing
-
-Contributions welcome! This is a demonstration project showcasing AWS serverless architecture patterns and modern RAG implementations.
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Acknowledgments
-
-Built with:
-- AWS IAM Terraform Modules
-- Amazon Bedrock Agents
-- Strands Agent Framework
-- Streamlit
+You can enable them in the [Bedrock Model Access](https://console.aws.amazon.com/bedrock/home#/modelaccess) console page.
 
 ---
 
-**Note**: This is a demonstration project. For production use, implement additional security controls including authentication, input validation, rate limiting, and comprehensive monitoring.
+## Getting Started
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/yourusername/agentic-rag-demo.git
+cd agentic-rag-demo
+```
+
+### Step 2: Deploy the Terraform backend
+
+The backend stores Terraform state remotely in S3 with DynamoDB locking. This only needs to be done once.
+
+```bash
+cd terraform/backend
+terraform init
+terraform apply
+```
+
+Review the plan and type `yes` when prompted. Note the outputs -- you'll need the bucket name and lock table name.
+
+### Step 3: Generate backend configuration files
+
+From the repo root:
+
+```bash
+cd terraform/scripts
+chmod +x generate-backend-configs.sh
+./generate-backend-configs.sh
+```
+
+This reads the backend outputs and creates `backend.hcl` files for each environment.
+
+### Step 4: Deploy the dev environment
+
+```bash
+cd ../environments/dev
+
+# Copy and customize the tfvars file
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars if you want to change region, models, etc.
+
+terraform init -backend-config=backend.hcl
+terraform apply
+```
+
+This creates all AWS resources: S3 buckets, S3 Vectors index, IAM roles, CloudWatch logs, Bedrock agent, and SSM parameters.
+
+After a successful apply, review the outputs:
+
+```bash
+# See all configuration values the agent needs
+terraform output -json agent_config
+
+# See the SSM prefix for the agent
+terraform output ssm_parameter_prefix
+# => /agentic-rag-demo/dev
+```
+
+Terraform automatically writes all infrastructure values (bucket names, index names, model IDs, etc.) to SSM Parameter Store under this prefix. The agent reads them at startup -- no manual copying required.
+
+### Step 5: Set up the Python environment
+
+```bash
+cd ../../../agent
+
+python -m venv .venv
+source .venv/bin/activate    # On Windows: .venv\Scripts\activate
+
+pip install -e ".[dev]"
+```
+
+### Step 6: Configure local development
+
+For local development, create a `.env` file so the agent can find your infrastructure:
+
+```bash
+cp .env.example .env
+```
+
+Then fill in the three required values from the Terraform outputs:
+
+```bash
+# Get the values from Terraform
+cd ../terraform/environments/dev
+terraform output -json agent_config
+```
+
+Copy the `documents_bucket`, `vectors_bucket`, and `vector_index` values into your `.env` file.
+
+Alternatively, if your AWS credentials have SSM access, you can skip the `.env` file entirely and set a single environment variable:
+
+```bash
+export SSM_PARAMETER_PREFIX=/agentic-rag-demo/dev
+```
+
+The agent will load all configuration from SSM automatically.
+
+**Configuration priority** (later sources override earlier ones):
+1. `.env` file (lowest)
+2. SSM Parameter Store
+3. Environment variables (highest)
+
+### Step 7: Run the Streamlit UI
+
+```bash
+cd agent  # if not already there
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501`. By default it runs in **local mode** -- the Strands Agent runs in-process alongside Streamlit.
+
+You can now:
+- Upload PDF, DOCX, TXT, or Markdown files using the sidebar
+- Ask questions about uploaded documents in the chat
+- List or delete documents from the knowledge base
+
+---
+
+## AgentCore Deployment (Optional)
+
+To run the agent remotely on AgentCore Runtime instead of in-process:
+
+### Deploy to AgentCore
+
+```bash
+cd agent
+agentcore deploy
+```
+
+This builds a container from `requirements.txt` and `main.py`, and deploys it to AgentCore Runtime. Note the Runtime ARN from the output.
+
+### Configure Streamlit to use AgentCore
+
+Add these to your `.env` file (or set as environment variables):
+
+```
+AGENT_MODE=agentcore
+AGENTCORE_RUNTIME_ARN=arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/your-runtime-id
+```
+
+Then restart Streamlit. The sidebar will show **Agent mode: AgentCore** to confirm it's calling the remote agent.
+
+---
+
+## GitHub Actions Deployment
+
+The repository includes workflows for automated Terraform deployment:
+
+```bash
+# 1. Configure GitHub Secrets (one-time)
+# See .github/GITHUB_ACTIONS_SETUP.md
+
+# 2. Push to trigger deployment
+git push origin main
+```
+
+See [.github/GITHUB_ACTIONS_SETUP.md](.github/GITHUB_ACTIONS_SETUP.md) for the full setup guide.
+
+## Documentation
+
+- [Architecture Guide](docs/ARCHITECTURE.md) -- design decisions, data flow diagrams, security model
+- [Setup Guide](docs/SETUP.md) -- detailed AWS account setup
+- [Deployment Guide](docs/DEPLOYMENT.md) -- CI/CD pipeline and production deployment
+
+## Cost Estimate (Dev)
+
+| Service | Estimated Monthly Cost |
+|---------|----------------------|
+| S3 Storage (10 GB) | ~$0.23 |
+| S3 Vectors (50 queries) | ~$2.50 |
+| Bedrock Embeddings (100K tokens) | ~$0.10 |
+| Bedrock LLM (500K tokens) | ~$7.50 |
+| AgentCore (50 invocations) | ~$2.50 |
+| CloudWatch Logs (1 GB) | ~$0.50 |
+| **Total** | **~$13/month** |
+
+Production costs scale with usage. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for optimization strategies.
+
+## License
+
+MIT License -- See LICENSE file for details.
+
+---
+
+**Note**: This is a demonstration project. For production use, add authentication, input validation, rate limiting, and comprehensive monitoring.

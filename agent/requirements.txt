@@ -1,0 +1,8 @@
+# Core dependencies for AgentCore Runtime deployment
+# This file is used by `agentcore deploy` to build the container image.
+strands-agents[bedrock]>=0.1.0
+bedrock-agentcore>=0.1.0
+boto3>=1.38.0
+pypdf>=5.0.0
+python-docx>=1.0.0
+python-dotenv>=1.0.0

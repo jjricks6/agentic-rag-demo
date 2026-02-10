@@ -182,7 +182,7 @@ s3://{project}-documents-{env}-{account-id}/
 - **Pricing**: $0.0001 per 1K tokens
 
 #### LLM Model
-- **Model**: `anthropic.claude-3-5-sonnet-20250110-v1:0`
+- **Model**: `us.anthropic.claude-3-5-sonnet-20241022-v2:0`
 - **Context Window**: 200K tokens
 - **Use Case**: Agent reasoning and response generation
 - **Pricing**: Input $3/MTok, Output $15/MTok

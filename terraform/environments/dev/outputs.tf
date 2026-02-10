@@ -121,8 +121,16 @@ output "agent_config" {
 
     # Environment
     environment           = var.environment
+
+    # SSM
+    ssm_parameter_prefix  = local.ssm_prefix
   }
   sensitive = false
+}
+
+output "ssm_parameter_prefix" {
+  description = "SSM Parameter Store prefix for agent configuration"
+  value       = local.ssm_prefix
 }
 
 # ============================================================================
