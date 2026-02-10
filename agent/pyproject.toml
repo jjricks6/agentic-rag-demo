@@ -1,7 +1,7 @@
 [project]
 name = "agentic-rag"
 version = "0.1.0"
-description = "Agentic RAG Demo - Document management and retrieval using Strands Agents"
+description = "Recall - Agentic document management and intelligent search, built with Strands Agents"
 requires-python = ">=3.11"
 dependencies = [
     "strands-agents[bedrock]>=0.1.0",

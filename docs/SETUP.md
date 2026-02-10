@@ -1,6 +1,6 @@
 # Setup Guide
 
-Complete step-by-step instructions for deploying the Agentic RAG Demo in your AWS account.
+Complete step-by-step instructions for deploying Recall in your AWS account.
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
@@ -490,7 +490,7 @@ streamlit run app.py
 
 Open your browser and navigate to: `http://localhost:8501`
 
-You should see the Agentic RAG Demo interface with:
+You should see the Recall interface with:
 - Document upload widget
 - Chat interface
 - Message history

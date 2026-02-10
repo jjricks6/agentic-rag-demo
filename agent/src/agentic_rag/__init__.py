@@ -1,4 +1,4 @@
-"""Agentic RAG Demo - Document management and retrieval using Strands Agents."""
+"""Recall - Agentic document management and intelligent search."""
 
 from agentic_rag.agent import create_agent
 

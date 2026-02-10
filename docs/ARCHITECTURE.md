@@ -12,7 +12,7 @@
 
 ## System Overview
 
-The Agentic RAG Demo implements a bidirectional Retrieval Augmented Generation (RAG) system that enables users to:
+Recall implements a bidirectional Retrieval Augmented Generation (RAG) system that enables users to:
 - Upload and manage documents through a conversational AI agent
 - Query the knowledge base using natural language
 - Receive contextually relevant answers with source attribution

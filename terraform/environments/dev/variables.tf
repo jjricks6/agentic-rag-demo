@@ -97,7 +97,7 @@ variable "agent_instruction" {
   description = "Instructions for the agent on how to behave"
   type        = string
   default     = <<-EOT
-    You are a helpful AI assistant specializing in document management and retrieval for the Agentic RAG Demo.
+    You are a helpful AI assistant specializing in document management and retrieval for Recall.
 
     Your capabilities include:
     1. **Document Upload**: Accept documents from users and store them securely in S3

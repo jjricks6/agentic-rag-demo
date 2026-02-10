@@ -1,4 +1,4 @@
-"""Streamlit UI for the Agentic RAG Demo.
+"""Streamlit UI for Recall.
 
 Supports two agent modes controlled by the AGENT_MODE env var:
   - "local":      Agent runs in-process (default, no AgentCore needed)
@@ -125,13 +125,13 @@ def send_message(message: str) -> str:
 
 def main() -> None:
     st.set_page_config(
-        page_title="Agentic RAG Demo",
+        page_title="Recall",
         page_icon="🔍",
         layout="wide",
     )
 
-    st.title("Agentic RAG Demo")
-    st.caption("Upload documents and ask questions about their content.")
+    st.title("Recall")
+    st.caption("Agentic document management and intelligent search.")
 
     init_session_state()
 

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Complete guide for deploying the Agentic RAG Demo using CI/CD pipelines and managing multiple environments.
+Complete guide for deploying Recall using CI/CD pipelines and managing multiple environments.
 
 ## Table of Contents
 1. [Deployment Overview](#deployment-overview)

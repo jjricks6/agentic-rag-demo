@@ -1,6 +1,6 @@
 # Production Environment
 
-Terraform configuration for the production environment of the Agentic RAG Demo.
+Terraform configuration for the production environment of Recall.
 
 ## Overview
 

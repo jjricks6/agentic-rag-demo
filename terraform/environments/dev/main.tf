@@ -1,5 +1,5 @@
 # Development Environment Configuration
-# This configuration deploys the complete Agentic RAG Demo infrastructure
+# This configuration deploys the complete Recall infrastructure
 
 terraform {
   required_version = ">= 1.5.0"

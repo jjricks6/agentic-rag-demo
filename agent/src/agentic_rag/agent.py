@@ -17,7 +17,7 @@ from agentic_rag.tools.vector_search import search_knowledge_base
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
-You are an intelligent document management and retrieval assistant for the Agentic RAG Demo.
+You are an intelligent document management and retrieval assistant for Recall.
 
 ## Capabilities
 

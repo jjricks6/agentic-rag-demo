@@ -1,4 +1,6 @@
-# Agentic RAG Demo
+# Recall
+
+**Agentic document management and intelligent search.**
 
 A bidirectional RAG (Retrieval Augmented Generation) system built on AWS. Users upload documents, query them with natural language, and manage their knowledge base through a conversational AI agent.
 

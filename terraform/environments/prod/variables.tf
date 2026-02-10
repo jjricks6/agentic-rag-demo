@@ -97,7 +97,7 @@ variable "agent_instruction" {
   description = "Instructions for the agent"
   type        = string
   default     = <<-EOT
-    You are a professional AI assistant for the Agentic RAG Demo production system.
+    You are a professional AI assistant for the Recall production system.
 
     Your capabilities:
     1. **Document Upload**: Accept and securely store documents

@@ -1,6 +1,6 @@
 # S3 Storage Module
 
-Terraform module for creating and configuring S3 buckets for document storage in the Agentic RAG Demo project.
+Terraform module for creating and configuring S3 buckets for document storage in Recall.
 
 ## Features
 

@@ -1,5 +1,5 @@
 # Production Environment Configuration
-# This configuration deploys the complete Agentic RAG Demo infrastructure for production
+# This configuration deploys the complete Recall infrastructure for production
 
 terraform {
   required_version = ">= 1.5.0"

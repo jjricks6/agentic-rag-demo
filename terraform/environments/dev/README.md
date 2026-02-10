@@ -1,6 +1,6 @@
 # Development Environment
 
-Terraform configuration for the development environment of the Agentic RAG Demo.
+Terraform configuration for the development environment of Recall.
 
 ## Overview
 
